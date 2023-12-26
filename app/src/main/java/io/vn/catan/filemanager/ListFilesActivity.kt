@@ -26,6 +26,8 @@ class ListFilesActivity : AppCompatActivity() {
             noFilesText.visibility = View.VISIBLE
             return
         }
+
+        filesAndFolders.sortWith(compareBy({ !it.isDirectory }, { it.extension }, { it.name }))
         noFilesText.visibility = View.INVISIBLE
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = MyAdapter(this, filesAndFolders, ::reload)

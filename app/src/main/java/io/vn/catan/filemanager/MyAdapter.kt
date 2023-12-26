@@ -1,10 +1,8 @@
 package io.vn.catan.filemanager
 
 import android.app.AlertDialog
-import android.app.Dialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -42,33 +40,55 @@ class MyAdapter(
 
         try {
             Files.move(path, newPath, StandardCopyOption.REPLACE_EXISTING)
-            println("File renamed successfully.")
         } catch (e: Exception) {
-            println("Error renaming file: ${e.message}")
             return false
         }
         return true
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val selectedFile = filesAndFolders[position]
-        holder.textView.text = selectedFile.name
-        if (selectedFile.isDirectory) {
-            holder.imageView.setImageResource(R.drawable.ic_baseline_folder_24)
-        } else {
-            holder.imageView.setImageResource(R.drawable.ic_baseline_insert_drive_file_24)
-        }
+        val file = filesAndFolders[position]
+
+        holder.textView.text = file.name
+        holder.imageView.setImageResource(
+            if (file.isDirectory) R.drawable.ic_baseline_folder_24
+            else {
+                when (file.extension) {
+                    "png", "jpg", "jpeg", "gif" -> R.drawable.baseline_image_24
+                    else -> R.drawable.ic_baseline_insert_drive_file_24
+                }
+            }
+        )
         holder.itemView.setOnClickListener {
-            if (selectedFile.isDirectory) {
+            if (file.isDirectory) {
                 val intent = Intent(context, ListFilesActivity::class.java)
-                val path = selectedFile.absolutePath
-                intent.putExtra("path", path)
+                intent.putExtra("path", file.absolutePath)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             } else {
                 // TODO: open the file
-
-
+                try {
+                    when (file.extension) {
+                        "png", "jpg", "jpeg", "gif" -> {
+                            val intent = Intent(context, ViewImageActivity::class.java)
+                            intent.putExtra("image", file.absolutePath)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(intent)
+                        }
+                        else -> {
+                            val intent = Intent(context, ViewTextActivity::class.java)
+                            intent.putExtra("text", file.absolutePath)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(intent)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        context.applicationContext,
+                        "Cannot open this file",
+                        Toast.LENGTH_SHORT
+                    )
+                }
             }
         }
         holder.itemView.setOnLongClickListener { v ->
@@ -79,10 +99,10 @@ class MyAdapter(
             popupMenu.setOnMenuItemClickListener { item ->
                 if (item.title == "DELETE") {
                     AlertDialog.Builder(context)
-                        .setTitle("Delete ${if (selectedFile.isDirectory) "folder" else "file"}")
+                        .setTitle("Delete ${if (file.isDirectory) "folder" else "file"}")
                         .setMessage("Are you sure to delete this?")
                         .setPositiveButton("OK") { _, _ ->
-                            val deleted = selectedFile.delete()
+                            val deleted = file.delete()
                             if (deleted) {
                                 Toast.makeText(
                                     context.applicationContext,
@@ -106,14 +126,18 @@ class MyAdapter(
                     val view =
                         LayoutInflater.from(context).inflate(R.layout.rename_dialog, null, false)
                     val input = view.findViewById<EditText>(R.id.rename_input)
-                    input.setText(selectedFile.nameWithoutExtension)
+                    input.setText(file.nameWithoutExtension)
 
                     AlertDialog.Builder(context)
-                        .setTitle("Rename ${if (selectedFile.isDirectory) "folder" else "file"}")
+                        .setTitle("Rename ${if (file.isDirectory) "folder" else "file"}")
                         .setView(view)
                         .setPositiveButton("OK") { _, _ ->
-                            val target = input.text.toString() + "." + selectedFile.extension
-                            val renamed = renameFileWithoutPath(selectedFile.absolutePath, target)
+                            val target = if (file.isDirectory) {
+                                input.text.toString()
+                            } else {
+                                input.text.toString() + "." + file.extension
+                            }
+                            val renamed = renameFileWithoutPath(file.absolutePath, target)
                             if (renamed) {
                                 Toast.makeText(
                                     context.applicationContext,

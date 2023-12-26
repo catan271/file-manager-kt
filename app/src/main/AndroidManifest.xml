@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="replace" />
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,7 +16,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FileManager"
         tools:targetApi="34">
-        <activity android:name=".ListFilesActivity"></activity>
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -25,6 +25,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ListFilesActivity"></activity>
+        <activity android:name=".ViewImageActivity"></activity>
+        <activity android:name=".ViewTextActivity"></activity>
     </application>
 
 </manifest>
